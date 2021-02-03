@@ -3,11 +3,14 @@ package main
 import (
 	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
 	"os"
 	"sort"
 	"strings"
-	"time"
+
+	"github.com/gorilla/handlers"
+	"github.com/gorilla/mux"
 )
 
 var counter = 0
@@ -16,16 +19,11 @@ var showEnvs = os.Getenv("YOSOY_SHOW_ENVS")
 var showFiles = os.Getenv("YOSOY_SHOW_FILES")
 
 func handler(w http.ResponseWriter, req *http.Request) {
-	if req.RequestURI == "/favicon.ico" {
-		w.WriteHeader(http.StatusNotFound)
-		return
-	}
-
 	remoteAddr := req.RemoteAddr
 	if index := strings.LastIndex(remoteAddr, ":"); index > 0 {
 		remoteAddr = remoteAddr[0:index]
 	}
-	fmt.Printf("[%v] - %v - %v - \"%v %v\"\n", hostname, time.Now().Format(time.RFC3339), remoteAddr, req.Method, req.RequestURI)
+
 	w.WriteHeader(http.StatusOK)
 	w.Header().Add("Content-Type", "text/plain")
 	fmt.Fprintf(w, "Request URI: %v\n", req.RequestURI)
@@ -58,7 +56,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		for _, file := range files {
 			bytes, err := ioutil.ReadFile(file)
 			if err != nil {
-				fmt.Printf("[%v] - %v - could not read file %v: %v\n", hostname, time.Now().Format(time.RFC3339), file, err)
+				log.Printf("Could not read file %v: %v\n", file, err)
 				continue
 			}
 			fmt.Fprintln(w)
@@ -70,7 +68,16 @@ func handler(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
-	fmt.Printf("[%v] - %v - yosoy is up!\n", hostname, time.Now().Format(time.RFC3339))
-	http.HandleFunc("/", handler)
-	http.ListenAndServe(":80", nil)
+	log.Printf("yosoy is up %v\n", hostname)
+
+	r := mux.NewRouter()
+
+	r.Handle("/favicon.ico", r.NotFoundHandler)
+	r.PathPrefix("/").HandlerFunc(handler)
+
+	loggingRouter := handlers.CombinedLoggingHandler(os.Stdout, r)
+	proxyRouter := handlers.ProxyHeaders(loggingRouter)
+	recoveryRouter := handlers.RecoveryHandler()(proxyRouter)
+
+	http.ListenAndServe(":80", recoveryRouter)
 }
