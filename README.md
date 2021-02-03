@@ -9,7 +9,7 @@ Typical use cases include:
 * testing HTTP routing & ingress
 * testing HTTP load balancing
 * testing HTTP caching
-* stubbing and prototyping the infrastructure
+* stubbing and prototyping distributed applications
 
 yosoy will provide information like:
 
@@ -38,7 +38,7 @@ It exposes HTTP service on port 80.
 
 Let's take a look at a sample Kubernetes deployment file. It uses both `YOSOY_SHOW_ENVS` and `YOSOY_SHOW_FILES`.
 
-> To illustrate `YOSOY_SHOW_FILES` functionality it uses Kubernetes Downward API to expose labels and annotations as volume files which are then read by yosoy.
+> To illustrate `YOSOY_SHOW_FILES` functionality Kubernetes Downward API is used to expose labels and annotations as volume files which are then returned by yosoy.
 
 ```
 apiVersion: apps/v1
@@ -116,8 +116,8 @@ Remote IP: 172.18.0.1
 Called: 2
 
 HTTP headers:
-User-Agent: curl/7.58.0
 Accept: */*
+User-Agent: curl/7.64.1
 
 Env variables:
 PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
