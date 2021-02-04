@@ -11,18 +11,23 @@ Typical use cases include:
 * testing HTTP caching
 * stubbing and prototyping distributed applications
 
-yosoy will provide information like:
+## API
 
-* Request URI
-* Hostname
-* Remote IP
-* How many times it was called
-* HTTP headers
-* Env variables if `YOSOY_SHOW_ENVS` is set to `true`, `yes`, `on`, or `1`
-* Files' contents if `YOSOY_SHOW_FILES` is set to a comma-separated list of (valid) files
+yosoy responds to all requests with a JSON containing the information about:
+
+* HTTP request:
+  * Host
+  * Request URI
+  * Remote IP
+  * HTTP headers
+  * HTTP proxy headers
+* host:
+  * Hostname
+  * How many times it was called
+  * Env variables if `YOSOY_SHOW_ENVS` is set to `true`, `yes`, `on`, or `1`
+  * Files' contents if `YOSOY_SHOW_FILES` is set to a comma-separated list of (valid) files
 
 See [Kubernetes example](#kubernetes-example) below.
-
 
 ## Docker image
 
@@ -36,116 +41,58 @@ It exposes HTTP service on port 80.
 
 ## Kubernetes example
 
-Let's take a look at a sample Kubernetes deployment file. It uses both `YOSOY_SHOW_ENVS` and `YOSOY_SHOW_FILES`.
+There is a sample Kubernetes deployment file in the `test` folder. It uses both `YOSOY_SHOW_ENVS` and `YOSOY_SHOW_FILES`. The deployment uses Kubernetes Downward API to expose labels and annotations as volume files which are then returned by yosoy.
 
-> To illustrate `YOSOY_SHOW_FILES` functionality Kubernetes Downward API is used to expose labels and annotations as volume files which are then returned by yosoy.
+Deploy it to minikube and execute curl to the service a couple of times:
 
-```
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: camarero
-  labels:
-    app.kubernetes.io/name: camarero
-spec:
-  replicas: 2
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: camarero
-  template:
-    metadata:
-      labels:
-        app.kubernetes.io/name: camarero
-    spec:
-      containers:
-      - name: yosoy
-        image: lukasz/yosoy
-        env:
-          - name: YOSOY_SHOW_ENVS
-            value: "true"
-          - name: YOSOY_SHOW_FILES
-            value: "/etc/podinfo/labels,/etc/podinfo/annotations"
-        ports:
-        - containerPort: 80
-        volumeMounts:
-        - name: podinfo
-          mountPath: /etc/podinfo
-      volumes:
-        - name: podinfo
-          downwardAPI:
-            items:
-              - path: "labels"
-                fieldRef:
-                  fieldPath: metadata.labels
-              - path: "annotations"
-                fieldRef:
-                  fieldPath: metadata.annotations
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: camarero
-  labels:
-    app.kubernetes.io/name: camarero
-spec:
-  type: NodePort
-  selector:
-    app.kubernetes.io/name: camarero
-  ports:
-    - protocol: TCP
-      port: 80
-```
-
-Deploy above service (with 2 replicas) and execute curl to the service a couple of times:
-
-```
-kubectl apply -f test-deployment.yaml
-export NODE_PORT=$(kubectl get services/camarero -o go-template='{{(index .spec.ports 0).nodePort}}')
-curl $(minikube ip):$NODE_PORT
-curl $(minikube ip):$NODE_PORT
-curl $(minikube ip):$NODE_PORT
-curl $(minikube ip):$NODE_PORT
+```bash
+# start minikube
+minikube start
+# deploy test service
+kubectl apply -f test/deployment.yaml
+# tunnel to it and copy the URL as $URL variable
+minikube service --url camarero
+# call it a few times
+curl $URL
+curl $URL
+curl $URL
+curl $URL
 ```
 
 A sample response looks like this:
 
-```
-Request URI: /
-Hostname: camarero-859d7c6d6b-kb5s5
-Remote IP: 172.18.0.1
-Called: 2
-
-HTTP headers:
-Accept: */*
-User-Agent: curl/7.64.1
-
-Env variables:
-PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
-HOSTNAME=camarero-859d7c6d6b-kb5s5
-YOSOY_SHOW_ENVS=true
-YOSOY_SHOW_FILES=/etc/podinfo/labels,/etc/podinfo/annotations
-CAMARERO_PORT_80_TCP_PORT=80
-CAMARERO_PORT_80_TCP_ADDR=10.105.203.131
-KUBERNETES_PORT=tcp://10.96.0.1:443
-KUBERNETES_PORT_443_TCP_PORT=443
-CAMARERO_SERVICE_HOST=10.105.203.131
-KUBERNETES_PORT_443_TCP_PROTO=tcp
-KUBERNETES_SERVICE_HOST=10.96.0.1
-KUBERNETES_SERVICE_PORT=443
-KUBERNETES_SERVICE_PORT_HTTPS=443
-KUBERNETES_PORT_443_TCP=tcp://10.96.0.1:443
-KUBERNETES_PORT_443_TCP_ADDR=10.96.0.1
-CAMARERO_PORT=tcp://10.105.203.131:80
-CAMARERO_SERVICE_PORT=80
-CAMARERO_PORT_80_TCP=tcp://10.105.203.131:80
-CAMARERO_PORT_80_TCP_PROTO=tcp
-HOME=/root
-
-File /etc/podinfo/labels:
-app.kubernetes.io/name="camarero"
-pod-template-hash="859d7c6d6b"
-
-File /etc/podinfo/annotations:
-kubernetes.io/config.seen="2020-11-17T07:38:15.374049163Z"
-kubernetes.io/config.source="api"
+```json
+{
+  "host": "127.0.0.1:53366",
+  "requestUri": "/",
+  "remoteAddr": "172.17.0.1",
+  "counter": 4,
+  "headers": {
+    "Accept": [
+      "*/*"
+    ],
+    "User-Agent": [
+      "curl/7.64.1"
+    ]
+  },
+  "hostname": "camarero-77787464ff-hjdkq",
+  "envVariables": [
+    "PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
+    "HOSTNAME=camarero-77787464ff-hjdkq",
+    "YOSOY_SHOW_ENVS=true",
+    "YOSOY_SHOW_FILES=/etc/podinfo/labels,/etc/podinfo/annotations",
+    "CAMARERO_SERVICE_HOST=10.97.113.33",
+    "CAMARERO_PORT=tcp://10.97.113.33:80",
+    "CAMARERO_PORT_80_TCP=tcp://10.97.113.33:80",
+    "CAMARERO_PORT_80_TCP_ADDR=10.97.113.33",
+    "CAMARERO_SERVICE_PORT=80",
+    "CAMARERO_PORT_80_TCP_PROTO=tcp",
+    "CAMARERO_PORT_80_TCP_PORT=80",
+    "HOME=/root"
+  ],
+  "files": {
+    "/etc/podinfo/annotations": "kubernetes.io/config.seen=\"2021-02-03T13:18:34.563751030Z\"\nkubernetes.io/config.source=\"api\"",
+    "/etc/podinfo/labels": "app.kubernetes.io/name=\"camarero\"\npod-template-hash=\"77787464ff\""
+  }
+}
 ```
