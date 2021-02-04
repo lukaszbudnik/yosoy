@@ -52,19 +52,19 @@ minikube start
 kubectl apply -f test/deployment.yaml
 # tunnel to it and copy the URL as $URL variable
 minikube service --url camarero
-# call it a few times
-curl $URL
-curl $URL
-curl $URL
-curl $URL
+# simulate some HTTP requests
+curl -H "Host: gateway.myapp.com" $URL/camarero/abc
+curl -H "Host: gateway.myapp.com" $URL/camarero/abc
+curl -H "Host: gateway.myapp.com" $URL/camarero/abc
+curl -H "Host: gateway.myapp.com" $URL/camarero/abc
 ```
 
 A sample response looks like this:
 
 ```json
 {
-  "host": "127.0.0.1:53366",
-  "requestUri": "/",
+  "host": "gateway.myapp.com",
+  "requestUri": "/camarero/abc",
   "remoteAddr": "172.17.0.1",
   "counter": 4,
   "headers": {
