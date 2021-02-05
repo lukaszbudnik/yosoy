@@ -1,4 +1,4 @@
-# yosoy
+# yosoy ![Go](https://github.com/lukaszbudnik/yosoy/workflows/Go/badge.svg) ![Docker](https://github.com/lukaszbudnik/yosoy/workflows/Docker%20Image%20CI/badge.svg)
 
 yosoy is a HTTP service for stubbing and prototyping distributed applications. It is a service which will introduce itself to the caller and print some useful information about its environment. "Yo soy" in español means "I am".
 
