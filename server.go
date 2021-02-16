@@ -26,7 +26,19 @@ type response struct {
 var counter = 0
 var hostname = os.Getenv("HOSTNAME")
 
+func preflight(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+	w.Header().Set("Access-Control-Allow-Methods", "*")
+	w.Header().Set("Access-Control-Allow-Headers", "*")
+	w.Header().Set("Access-Control-Allow-Credentials", "true")
+	w.Header().Set("Access-Control-Expose-Headers", "*")
+	w.Header().Set("Access-Control-Max-Age", "600")
+	w.WriteHeader(http.StatusOK)
+}
+
 func handler(w http.ResponseWriter, req *http.Request) {
+	w.Header().Set("Access-Control-Allow-Origin", "*")
+
 	showEnvs := os.Getenv("YOSOY_SHOW_ENVS")
 	showFiles := os.Getenv("YOSOY_SHOW_FILES")
 
@@ -80,7 +92,8 @@ func main() {
 	r := mux.NewRouter()
 
 	r.Handle("/favicon.ico", r.NotFoundHandler)
-	r.PathPrefix("/").HandlerFunc(handler)
+	r.PathPrefix("/").HandlerFunc(preflight).Methods(http.MethodOptions)
+	r.PathPrefix("/").HandlerFunc(handler).Methods(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodConnect, http.MethodHead, http.MethodTrace)
 
 	loggingRouter := handlers.CombinedLoggingHandler(os.Stdout, r)
 	proxyRouter := handlers.ProxyHeaders(loggingRouter)

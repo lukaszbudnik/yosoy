@@ -32,8 +32,12 @@ func TestHandler(t *testing.T) {
 	var response response
 	json.Unmarshal(rr.Body.Bytes(), &response)
 
+	// test response
 	assert.Equal(t, 1, response.Counter)
 	assert.Equal(t, "example.org", response.Host)
 	assert.NotEmpty(t, response.EnvVariables)
 	assert.NotEmpty(t, response.Files[".gitignore"])
+
+	// test cors
+	assert.Contains(t, rr.HeaderMap["Access-Control-Allow-Origin"], "*")
 }
