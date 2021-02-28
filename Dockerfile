@@ -1,4 +1,4 @@
-FROM golang:1.15.7-alpine3.13 as builder
+FROM golang:1.16.0-alpine3.13 as builder
 
 LABEL maintainer="Łukasz Budnik lukasz.budnik@gmail.com"
 
