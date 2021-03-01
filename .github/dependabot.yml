@@ -5,7 +5,7 @@ updates:
     directory: "/"
     schedule:
       interval: "daily"
-  # Maintain dependencies for npm
+  # Maintain dependencies for go lang
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
