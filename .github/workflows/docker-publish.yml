@@ -38,7 +38,7 @@ jobs:
             lukasz/yosoy
             ghcr.io/${{ github.repository }}
           tags: |
-            type=raw,value=latest
+            type=edge
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
             type=semver,pattern={{major}}
