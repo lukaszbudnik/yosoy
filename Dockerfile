@@ -6,7 +6,7 @@ LABEL maintainer="Łukasz Budnik lukasz.budnik@gmail.com"
 ADD . /go/yosoy
 RUN cd /go/yosoy && go build
 
-FROM alpine:3.13
+FROM alpine:3.14.1
 COPY --from=builder /go/yosoy/yosoy /bin
 
 # register entrypoint
