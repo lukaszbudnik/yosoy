@@ -14,7 +14,11 @@ import (
 
 type response struct {
 	Host         string              `json:"host"`
+	Proto        string              `json:"proto"`
+	Method       string              `json:"method"`
+	Scheme       string              `json:"scheme"`
 	RequestURI   string              `json:"requestUri"`
+	URL          string              `json:"url"`
 	RemoteAddr   string              `json:"remoteAddr"`
 	Counter      int                 `json:"counter"`
 	Headers      map[string][]string `json:"headers"`
@@ -52,7 +56,11 @@ func handler(w http.ResponseWriter, req *http.Request) {
 
 	response.RequestURI = req.RequestURI
 	response.Host = req.Host
+	response.Proto = req.Proto
+	response.Method = req.Method
+	response.Scheme = req.URL.Scheme
 	response.Headers = req.Header
+	response.URL = req.URL.String()
 
 	response.Hostname = hostname
 
