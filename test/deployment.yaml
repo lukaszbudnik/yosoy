@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: yosoy
-        image: lukasz/yosoy
+        image: lukasz/yosoy:2.0.3
         env:
           - name: YOSOY_SHOW_ENVS
             value: "true"
