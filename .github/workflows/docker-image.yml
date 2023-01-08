@@ -9,4 +9,18 @@ jobs:
     steps:
       - uses: actions/checkout@v3.3.0
       - name: Build the Docker image
-        run: docker build . --file Dockerfile --tag yosoy-local:$(date +%s)
+        run: docker build . --file Dockerfile --tag yosoy-local:latest
+      - name: Run simple integration test
+        run: |
+          docker run -p 3333:80 yosoy-local:latest > yosoy.log &
+          sleep 5
+          RESULT=$(curl -s -X DELETE -H 'x-api-key: abc123' 'http://0.0.0.0:3333/sample/path?with=params')
+          echo "$RESULT"
+          if [[ $RESULT =~ '"method":"DELETE"' ]]
+          then
+            echo 'Test successful'
+            exit 0
+          else
+            echo 'Test failure'
+            exit 1
+          fi
