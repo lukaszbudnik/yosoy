@@ -1,4 +1,4 @@
-FROM golang:1.17.3-alpine3.13 as builder
+FROM golang:1.19-alpine as builder
 
 LABEL maintainer="Łukasz Budnik lukasz.budnik@gmail.com"
 
@@ -6,7 +6,7 @@ LABEL maintainer="Łukasz Budnik lukasz.budnik@gmail.com"
 ADD . /go/yosoy
 RUN cd /go/yosoy && go build
 
-FROM alpine:3.16.2
+FROM alpine:3.17
 COPY --from=builder /go/yosoy/yosoy /bin
 
 # register entrypoint
