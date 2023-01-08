@@ -17,9 +17,10 @@ jobs:
           RESULT=$(curl -s -X DELETE -H 'x-api-key: abc123' 'http://0.0.0.0:3333/sample/path?with=params')
           echo "$RESULT"
           if [[ $RESULT =~ '"method":"DELETE"' ]]
+          then
             echo 'Test successful'
             exit 0
           else
             echo 'Test failure'
             exit 1
-          endif
+          fi
