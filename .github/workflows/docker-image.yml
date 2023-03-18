@@ -7,7 +7,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3.3.0
+      - uses: actions/checkout@v3.4.0
       - name: Build the Docker image
         run: docker build . --file Dockerfile --tag yosoy-local:latest
       - name: Run simple integration test
