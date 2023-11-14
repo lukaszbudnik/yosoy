@@ -2,7 +2,6 @@ package main
 
 import (
 	"encoding/json"
-	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
@@ -71,7 +70,7 @@ func handler(w http.ResponseWriter, req *http.Request) {
 		response.Files = make(map[string]string)
 		files := strings.Split(showFiles, ",")
 		for _, file := range files {
-			bytes, err := ioutil.ReadFile(file)
+			bytes, err := os.ReadFile(file)
 			if err != nil {
 				log.Printf("Could not read file %v: %v\n", file, err)
 				continue
