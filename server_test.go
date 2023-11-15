@@ -1,6 +1,7 @@
 package main
 
 import (
+	"bytes"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -29,8 +30,12 @@ func TestHandler(t *testing.T) {
 		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
 	}
 
+	result := rr.Result()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(result.Body)
+
 	var response response
-	json.Unmarshal(rr.Body.Bytes(), &response)
+	json.Unmarshal(buf.Bytes(), &response)
 
 	// test response
 	assert.Equal(t, 1, response.Counter)
@@ -43,5 +48,5 @@ func TestHandler(t *testing.T) {
 	assert.NotEmpty(t, response.Files[".gitignore"])
 
 	// test cors
-	assert.Contains(t, rr.HeaderMap["Access-Control-Allow-Origin"], "*")
+	assert.Contains(t, result.Header["Access-Control-Allow-Origin"], "*")
 }
