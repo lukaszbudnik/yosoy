@@ -1,15 +1,18 @@
 # yosoy ![Go](https://github.com/lukaszbudnik/yosoy/workflows/Go/badge.svg) ![Docker](https://github.com/lukaszbudnik/yosoy/workflows/Docker%20Image%20CI/badge.svg)
 
-yosoy is a HTTP service for stubbing and prototyping distributed applications. It is a service which will introduce itself to the caller and print some useful information about its environment. "Yo soy" in español means "I am".
+yosoy is an HTTP service for stubbing and prototyping distributed applications. It is a service that introduces itself to the caller and prints useful information about its runtime environment. 
 
-yosoy is extremely useful when creating a distributed application stub and you need to see more meaningful responses than a default nginx welcome page.
+yosoy is extremely useful when creating a stub for a distributed application, as it provides more meaningful responses than, for example, a default nginx welcome page. Further, yosoy incorporates a built-in reachability analyzer to facilitate troubleshooting connectivity issues in distributed systems. A dedicated reachability analyzer endpoint validates network connectivity between yosoy and remote endpoints.
 
 Typical use cases include:
 
-- testing HTTP routing & ingress
-- testing HTTP load balancing
-- testing HTTP caching
-- stubbing and prototyping distributed applications
+- Testing HTTP routing and ingress
+- Testing HTTP load balancing
+- Testing HTTP caching
+- Executing reachability analysis
+- Stubbing and prototyping distributed applications
+
+"Yo soy" means "I am" in Spanish.
 
 ## API
 
@@ -31,19 +34,16 @@ yosoy responds to all requests with a JSON containing the information about:
   - Env variables if `YOSOY_SHOW_ENVS` is set to `true`, `yes`, `on`, or `1`
   - Files' contents if `YOSOY_SHOW_FILES` is set to a comma-separated list of (valid) files
 
-Checkout out [Sample JSON response](#sample-json-response) below to see how useful yosoy is when troubleshooting/stubbing/prototyping distributed applications.
+Check [Sample JSON response](#sample-json-response) to see how you can use yosoy for stubbing/prototyping/troubleshooting distributed applications.
+
+Check [ping/reachability analyzer](#pingreachability-analyzer) to see how you can use yosoy for troubleshooting network connectivity.
 
 ## Docker image
 
-The docker image is available on docker hub:
+The docker image is available on docker hub and ghcr.io:
 
 ```sh
 docker pull lukasz/yosoy
-```
-
-and ghcr.io:
-
-```sh
 docker pull ghcr.io/lukaszbudnik/yosoy
 ```
 
@@ -51,7 +51,7 @@ It exposes HTTP service on port 80.
 
 ## Kubernetes example
 
-There is a sample Kubernetes deployment file in the `test` folder. It uses both `YOSOY_SHOW_ENVS` and `YOSOY_SHOW_FILES`. The deployment uses Kubernetes Downward API to expose labels and annotations as volume files which are then returned by yosoy.
+There is a sample Kubernetes deployment file in the `test` folder. It uses both `YOSOY_SHOW_ENVS` and `YOSOY_SHOW_FILES` features. The deployment uses Kubernetes Downward API to expose labels and annotations as volume files which are then returned by yosoy.
 
 Deploy it to minikube and execute curl to the service a couple of times:
 
@@ -130,4 +130,43 @@ A sample yosoy JSON response to a request made from a single page application (S
     "/etc/podinfo/labels": "app.kubernetes.io/component=\"api\"\napp.kubernetes.io/name=\"camarero\"\napp.kubernetes.io/part-of=\"hotel\"\napp.kubernetes.io/version=\"0.0.1\"\npod-template-hash=\"cf7c95ccd\""
   }
 }
+```
+
+## ping/reachability analyzer
+
+yosoy includes a simple ping/reachability analyzer. You can use this functionality when prototyping distributed systems to validate whether a given component can reach a specific endpoint. yosoy exposes a dedicated `/_/yosoy/ping` endpoint which accepts the following 3 query parameters:
+
+* `h` - required - hostname of the endpoint
+* `p` - required - port of the endpoint
+* `n` - optional - network, all valid Go networks are supported (including the most popular ones like `tcp`, `udp`, IPv4, IPV6, etc.). If `n` parameter is not provided, it defaults to `tcp`. Go will throw an error if `n` parameter will be set to unknown network.
+
+For example, to test if yosoy can connect to `google.com` on port `443` using default `tcp` network use the following command:
+
+```bash
+curl "$URL/_/yosoy/ping?h=google.com&p=443"
+```
+
+To see an unsuccessful response you may use localhost with some random port number:
+
+```bash
+curl "$URL/_/yosoy/ping?h=127.0.0.1&p=12345"
+```
+
+## Building and testing locally
+
+Here are some commands to get you started.
+
+Run yosoy directly on port 80.
+
+```bash
+go test -coverprofile cover.out
+go tool cover -html=cover.out
+go run server.go
+```
+
+Building local Docker container and run it on port 8080:
+
+```bash
+docker build -t yosoy-local:latest .
+docker run --rm --name yosoy-local -p 8080:80 yosoy-local:latest
 ```

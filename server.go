@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/json"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -24,6 +25,14 @@ type response struct {
 	Hostname     string              `json:"hostname"`
 	EnvVariables []string            `json:"envVariables,omitempty"`
 	Files        map[string]string   `json:"files,omitempty"`
+}
+
+type errorResponse struct {
+	Error string `json:"error"`
+}
+
+type successResponse struct {
+	Message string `json:"message"`
 }
 
 var counter = 0
@@ -85,6 +94,55 @@ func handler(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(response)
 }
 
+func ping(w http.ResponseWriter, req *http.Request) {
+	// get h, p, t parameters from query string
+	hostname := req.URL.Query().Get("h")
+	port := req.URL.Query().Get("p")
+	network := req.URL.Query().Get("n")
+
+	// return HTTP BadRequest when hostname is empty
+	if hostname == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Add("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(w).Encode(&errorResponse{"hostname is empty"})
+		return
+	}
+	// return HTTP BadRequest when port is empty
+	if port == "" {
+		w.WriteHeader(http.StatusBadRequest)
+		w.Header().Add("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(w).Encode(&errorResponse{"port is empty"})
+		return
+	}
+	// if network is empty set default to tcp
+	if network == "" {
+		network = "tcp"
+	}
+	// ping the hostname and port by opening a socket
+	err := pingHost(hostname, port, network)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		w.Header().Add("Content-Type", "application/json; charset=utf-8")
+		json.NewEncoder(w).Encode(&errorResponse{err.Error()})
+		return
+	}
+	// return HTTP OK
+	w.WriteHeader(http.StatusOK)
+	w.Header().Add("Content-Type", "application/json; charset=utf-8")
+	json.NewEncoder(w).Encode(&successResponse{"ping succeeded"})
+}
+
+func pingHost(hostname, port, network string) error {
+	// open a socket to hostname and port
+	conn, err := net.Dial(network, hostname+":"+port)
+	if err != nil {
+		return err
+	}
+	// close the socket
+	conn.Close()
+	return nil
+}
+
 func remoteAddrWithoutPort(req *http.Request) string {
 	remoteAddr := req.RemoteAddr
 	if index := strings.LastIndex(remoteAddr, ":"); index > 0 {
@@ -99,6 +157,7 @@ func main() {
 	r := mux.NewRouter()
 
 	r.Handle("/favicon.ico", r.NotFoundHandler)
+	r.HandleFunc("/_/yosoy/ping", ping).Methods(http.MethodGet)
 	r.PathPrefix("/").HandlerFunc(preflight).Methods(http.MethodOptions)
 	r.PathPrefix("/").HandlerFunc(handler).Methods(http.MethodGet, http.MethodPut, http.MethodPatch, http.MethodPost, http.MethodDelete, http.MethodConnect, http.MethodHead, http.MethodTrace)
 
