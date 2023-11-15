@@ -36,7 +36,7 @@ yosoy responds to all requests with a JSON containing the information about:
 
 Check [Sample JSON response](#sample-json-response) to see how you can use yosoy for stubbing/prototyping/troubleshooting distributed applications.
 
-Check [ping/reachibility analyzer](#pingreachibility-analyzer) to see how you can use yosoy for troubleshooting network connectivity.
+Check [ping/reachability analyzer](#pingreachability-analyzer) to see how you can use yosoy for troubleshooting network connectivity.
 
 ## Docker image
 
@@ -132,7 +132,7 @@ A sample yosoy JSON response to a request made from a single page application (S
 }
 ```
 
-## ping/reachibility analyzer
+## ping/reachability analyzer
 
 yosoy includes a simple ping/reachability analyzer. You can use this functionality when prototyping distributed systems to validate whether a given component can reach a specific endpoint. yosoy exposes a dedicated `/_/yosoy/ping` endpoint which accepts the following 3 query parameters:
 
