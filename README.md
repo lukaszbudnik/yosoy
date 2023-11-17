@@ -36,7 +36,16 @@ yosoy responds to all requests with a JSON containing the information about:
 
 Check [Sample JSON response](#sample-json-response) to see how you can use yosoy for stubbing/prototyping/troubleshooting distributed applications.
 
-Check [ping/reachability analyzer](#pingreachability-analyzer) to see how you can use yosoy for troubleshooting network connectivity.
+## ping/reachability analyzer
+
+yosoy includes a simple ping/reachability analyzer. You can use this functionality when prototyping distributed systems to validate whether a given component can reach a specific endpoint. yosoy exposes a dedicated `/_/yosoy/ping` endpoint which accepts the following 4 query parameters:
+
+* `h` - required - hostname of the endpoint
+* `p` - required - port of the endpoint
+* `n` - optional - network, all valid Go networks are supported (including the most popular ones like `tcp`, `udp`, IPv4, IPV6, etc.). If `n` parameter is not provided, it defaults to `tcp`. If `n` parameter is set to unknown network, an error will be returned.
+* `t` - optional - timeout in seconds. If `t` parameter is not provided, it defaults to `10`. If `t` contains invalid integer literal, an error will be returned.
+
+Check [Sample ping/reachability analyzer responses](#sample-pingreachability-analyzer-responses) to see how you can use yosoy for troubleshooting network connectivity.
 
 ## Docker image
 
@@ -132,24 +141,40 @@ A sample yosoy JSON response to a request made from a single page application (S
 }
 ```
 
-## ping/reachability analyzer
+## Sample ping/reachability analyzer responses
 
-yosoy includes a simple ping/reachability analyzer. You can use this functionality when prototyping distributed systems to validate whether a given component can reach a specific endpoint. yosoy exposes a dedicated `/_/yosoy/ping` endpoint which accepts the following 3 query parameters:
-
-* `h` - required - hostname of the endpoint
-* `p` - required - port of the endpoint
-* `n` - optional - network, all valid Go networks are supported (including the most popular ones like `tcp`, `udp`, IPv4, IPV6, etc.). If `n` parameter is not provided, it defaults to `tcp`. Go will throw an error if `n` parameter will be set to unknown network.
-
-For example, to test if yosoy can connect to `google.com` on port `443` using default `tcp` network use the following command:
+To test if yosoy can connect to `google.com` on port `443` using default `tcp` network use the following command:
 
 ```bash
-curl "$URL/_/yosoy/ping?h=google.com&p=443"
+curl -v "http://localhost/_/yosoy/ping?h=google.com&p=443"
+> GET /_/yosoy/ping?h=google.com&p=443 HTTP/1.1
+> Host: localhost
+> User-Agent: curl/7.86.0
+> Accept: */*
+>
+< HTTP/1.1 200 OK
+< Date: Fri, 17 Nov 2023 05:54:36 GMT
+< Content-Length: 29
+< Content-Type: text/plain; charset=utf-8
+<
+{"message":"ping succeeded"}
 ```
 
 To see an unsuccessful response you may use localhost with some random port number:
 
 ```bash
-curl "$URL/_/yosoy/ping?h=127.0.0.1&p=12345"
+curl -v "http://localhost/_/yosoy/ping?h=127.0.0.1&p=12345"
+> GET /_/yosoy/ping?h=127.0.0.1&p=12345 HTTP/1.1
+> Host: localhost
+> User-Agent: curl/7.86.0
+> Accept: */*
+>
+< HTTP/1.1 500 Internal Server Error
+< Date: Fri, 17 Nov 2023 05:53:48 GMT
+< Content-Length: 66
+< Content-Type: text/plain; charset=utf-8
+<
+{"error":"dial tcp 127.0.0.1:12345: connect: connection refused"}
 ```
 
 ## Building and testing locally

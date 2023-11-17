@@ -6,11 +6,16 @@ import (
 	"net"
 	"net/http"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
+
+const PING_DEFAULT_TIMEOUT = 10
+const PING_DEFAULT_NETWORK = "tcp"
 
 type response struct {
 	Host         string              `json:"host"`
@@ -95,10 +100,12 @@ func handler(w http.ResponseWriter, req *http.Request) {
 }
 
 func ping(w http.ResponseWriter, req *http.Request) {
-	// get h, p, t parameters from query string
+	// get h, p, n, t parameters from query string
 	hostname := req.URL.Query().Get("h")
 	port := req.URL.Query().Get("p")
 	network := req.URL.Query().Get("n")
+	timeoutString := req.URL.Query().Get("t")
+	var timeout int64 = PING_DEFAULT_TIMEOUT
 
 	// return HTTP BadRequest when hostname is empty
 	if hostname == "" {
@@ -114,12 +121,25 @@ func ping(w http.ResponseWriter, req *http.Request) {
 		json.NewEncoder(w).Encode(&errorResponse{"port is empty"})
 		return
 	}
+	// check if timeoutString is a valid int64, return HTTP BadRequest when invalid, otherwise set timeout value
+	if timeoutString != "" {
+		timeoutInt, err := strconv.ParseInt(timeoutString, 10, 64)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			w.Header().Add("Content-Type", "application/json; charset=utf-8")
+			json.NewEncoder(w).Encode(&errorResponse{"timeout is invalid"})
+			return
+		}
+		timeout = timeoutInt
+	}
+
 	// if network is empty set default to tcp
 	if network == "" {
-		network = "tcp"
+		network = PING_DEFAULT_NETWORK
 	}
-	// ping the hostname and port by opening a socket
-	err := pingHost(hostname, port, network)
+
+	// ping the hostname and port
+	err := pingHost(hostname, port, network, timeout)
 	if err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		w.Header().Add("Content-Type", "application/json; charset=utf-8")
@@ -132,9 +152,12 @@ func ping(w http.ResponseWriter, req *http.Request) {
 	json.NewEncoder(w).Encode(&successResponse{"ping succeeded"})
 }
 
-func pingHost(hostname, port, network string) error {
+func pingHost(hostname, port, network string, timeout int64) error {
+	// create timeoutDuration variable of Duration type using timeout as the value in seconds
+	timeoutDuration := time.Duration(timeout) * time.Second
+
 	// open a socket to hostname and port
-	conn, err := net.Dial(network, hostname+":"+port)
+	conn, err := net.DialTimeout(network, hostname+":"+port, timeoutDuration)
 	if err != nil {
 		return err
 	}
