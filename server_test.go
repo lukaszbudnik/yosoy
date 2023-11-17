@@ -235,3 +235,71 @@ func TestHandlerPreflight(t *testing.T) {
 	assert.Equal(t, "600", result.Header.Get("Access-Control-Max-Age"))
 	assert.Equal(t, "*", result.Header.Get("Access-Control-Expose-Headers"))
 }
+
+// write test for request /_/yosoy/ping?h=127.0.0.1&p=8123&n=tcp&t=5, the request should return 200 ok and return JSON with message "ping succeeded"
+func TestHandlerPingWithHostnameAndPortAndNetworkAndTimeout(t *testing.T) {
+
+	// create tcp process to listen on port 8123
+	listener, err := net.Listen("tcp", "localhost:8123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
+	req, err := http.NewRequest("GET", "https://example.org/_/yosoy/ping?h=127.0.0.1&p=8123&n=tcp&t=5", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Accept", "*/*")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ping)
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusOK {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusOK)
+	}
+
+	result := rr.Result()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(result.Body)
+	var response successResponse
+	json.Unmarshal(buf.Bytes(), &response)
+	// test response
+	assert.Equal(t, "ping succeeded", response.Message)
+}
+
+// write test for request /_/yosoy/ping?h=127.0.0.1&p=8123&n=tcp&t=invalid, the request should return 400 bad request and return JSON with error "timeout is invalid"
+func TestHandlerPingWithHostnameAndPortAndNetworkAndTimeoutInvalid(t *testing.T) {
+
+	// create tcp process to listen on port 8123
+	listener, err := net.Listen("tcp", "localhost:8123")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer listener.Close()
+
+	req, err := http.NewRequest("GET", "https://example.org/_/yosoy/ping?h=127.0.0.1&p=8123&n=tcp&t=invalid", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	req.Header.Set("Accept", "*/*")
+
+	rr := httptest.NewRecorder()
+	handler := http.HandlerFunc(ping)
+
+	handler.ServeHTTP(rr, req)
+
+	if status := rr.Code; status != http.StatusBadRequest {
+		t.Errorf("handler returned wrong status code: got %v want %v", status, http.StatusBadRequest)
+	}
+
+	result := rr.Result()
+	buf := new(bytes.Buffer)
+	buf.ReadFrom(result.Body)
+	var response errorResponse
+	json.Unmarshal(buf.Bytes(), &response)
+	// test response
+	assert.Equal(t, "timeout is invalid", response.Error)
+}
