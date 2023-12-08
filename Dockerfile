@@ -10,7 +10,7 @@ ADD . /go/yosoy
 RUN go env -w GOPROXY=direct
 RUN cd /go/yosoy && go build
 
-FROM alpine:3.18
+FROM alpine:3.19
 COPY --from=builder /go/yosoy/yosoy /bin
 
 # register entrypoint
