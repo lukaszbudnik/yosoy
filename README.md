@@ -14,6 +14,14 @@ Typical use cases include:
 
 "Yo soy" means "I am" in Spanish.
 
+## HTTP Protocol Support
+
+yosoy supports HTTP/1.1 and HTTP/2:
+
+- **HTTP/1.1**: Full support for all HTTP/1.1 features
+- **HTTP/2**: Supported when using TLS/HTTPS connections
+- **HTTP/3**: Not supported - would require QUIC protocol implementation which is not available in the standard Go HTTP library
+
 ## API
 
 yosoy responds to all requests with a JSON containing the information about:

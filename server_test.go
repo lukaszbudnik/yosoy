@@ -13,6 +13,9 @@ import (
 )
 
 func TestHandler(t *testing.T) {
+	// Reset counter to ensure test isolation
+	counter = 0
+
 	os.Setenv("YOSOY_SHOW_ENVS", "true")
 	os.Setenv("YOSOY_SHOW_FILES", ".gitignore,/file/does/not/exist")
 
