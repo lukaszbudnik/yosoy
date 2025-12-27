@@ -1,6 +1,6 @@
 module github.com/lukaszbudnik/yosoy
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/gorilla/handlers v1.5.2
