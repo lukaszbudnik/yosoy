@@ -4,14 +4,40 @@ updates:
   - package-ecosystem: "github-actions"
     directory: "/"
     schedule:
-      interval: "daily"
-  # Maintain dependencies for go lang
+      interval: "monthly"
+      time: "07:00"
+    groups:
+      github-actions:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Maintain dependencies for Go modules
   - package-ecosystem: "gomod"
     directory: "/"
     schedule:
-      interval: "daily"
-  # Maintain dependencies for docker
+      interval: "monthly"
+      time: "02:00"
+    groups:
+      go-dependencies:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Maintain base images in Dockerfile (golang builder + alpine runtime)
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
-      interval: "daily"
+      interval: "monthly"
+      time: "05:00"
+    groups:
+      docker-images:
+        patterns:
+          - "*"
+        update-types:
+          - "minor"
+          - "patch"
