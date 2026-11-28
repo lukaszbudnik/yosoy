@@ -1,9 +1,17 @@
 name: Go
 
-on: [push, pull_request]
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  build:
+  go-build:
+    name: Go Build and Test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -11,10 +19,13 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v7
         with:
-          go-version: '1.25'
+          go-version-file: go.mod
 
       - name: Build
         run: go build -v ./...
 
+      - name: Vet
+        run: go vet ./...
+
       - name: Test
-        run: go test -v ./...
+        run: go test -v -race ./...
